@@ -1,0 +1,25 @@
+---
+
+- name: Installer Mysql
+  yum: name={{ item }} state=present
+  with_items:
+   - mysql-server
+   - MySQL-python
+
+- name: Configurer SELinux 
+  seboolean: name=mysql_connect_any state=true persistent=yes
+  when: sestatus.rc != 0
+
+- name: Configuration file
+  template: src=my.cnf.j2 dest=/etc/my.cnf
+  notify:
+  - restart mysql
+
+- name: Start Mysql
+  service: name=mysqld state=started enabled=yes
+
+- name: Creer Application Database
+  mysql_db: name={{ dbname }} state=present
+
+- name: Creer Application DB User
+  mysql_user: name={{ dbuser }} password={{ upassword }} priv=*.*:ALL host='%' state=present
